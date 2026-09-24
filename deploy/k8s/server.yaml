@@ -1,0 +1,155 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: qredin-postgres
+  namespace: qredin-system
+type: Opaque
+data:
+  POSTGRES_PASSWORD: cGFzc3dvcmQxMjM=
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: qredin-server-config
+  namespace: qredin-system
+data:
+  server.yaml: |
+    environment: production
+    log_level: info
+    log_format: json
+    http:
+      listen_addr: ":443"
+      uds_path: "/var/run/qredin/workload-api.sock"
+      tls_cert: ""
+      tls_key: ""
+    postgres:
+      dsn: "postgres://qredin:@qredin-postgres:5432/qredin?sslmode=require"
+      max_conns: 10
+      min_conns: 2
+      conn_timeout: 5s
+    trust_domain: "prod.example.com"
+    key_manager:
+      type: aws_kms
+      region: "us-east-1"
+      key_id: "arn:aws:kms:us-east-1:123456789012:key/abcd-efgh"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qredin-server
+  namespace: qredin-system
+  labels:
+    app: qredin-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: qredin-server
+  template:
+    metadata:
+      labels:
+        app: qredin-server
+    spec:
+      serviceAccountName: qredin-server
+      containers:
+        - name: server
+          image: qredin/server:latest
+          ports:
+            - containerPort: 443
+          volumeMounts:
+            - name: config
+              mountPath: /etc/qredin
+            - name: keys
+              mountPath: /var/lib/qredin/keys
+              readOnly: false
+            - name: sockets
+              mountPath: /var/run/qredin
+          env:
+            - name: CONFIG
+              value: /etc/qredin/server.yaml
+      volumes:
+        - name: config
+          configMap:
+            name: qredin-server-config
+        - name: keys
+          emptyDir: {}
+        - name: sockets
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qredin-server
+  namespace: qredin-system
+  labels:
+    app: qredin-server
+spec:
+  ports:
+    - name: grpc
+      port: 443
+      protocol: TCP
+      targetPort: 443
+  selector:
+    app: qredin-server
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: qredin-server
+  namespace: qredin-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: qredin-server-role
+  namespace: qredin-system
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: qredin-server-rb
+  namespace: qredin-system
+subjects:
+  - kind: ServiceAccount
+    name: qredin-server
+    namespace: qredin-system
+roleRef:
+  kind: Role
+  name: qredin-server-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: qredin-server-np
+  namespace: qredin-system
+spec:
+  podSelector:
+    matchLabels:
+      app: qredin-server
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: qredin-agent
+        - podSelector:
+            matchLabels:
+              app: qredin-authz
+      ports:
+        - protocol: TCP
+          port: 443
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/16
+      ports:
+        - protocol: TCP
+          port: 5432

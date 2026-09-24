@@ -1,0 +1,18 @@
+FROM alpine:3.20 AS base
+
+RUN addgroup -S qredin && adduser -S qredin -G qredin
+
+RUN mkdir -p /var/lib/qredin/keys /var/run/qredin /etc/qredin && \
+    chown -R qredin:qredin /var/lib/qredin /var/run/qredin /etc/qredin
+
+FROM base AS authz
+
+COPY bin/qredin-authz /usr/local/bin/qredin-authz
+COPY deploy/config/authz.dev.yaml /etc/qredin/authz.yaml
+
+USER qredin:qredin
+
+EXPOSE 443 9091
+
+ENTRYPOINT ["/usr/local/bin/qredin-authz"]
+CMD ["--config", "/etc/qredin/authz.yaml"]

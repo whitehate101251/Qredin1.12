@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package workloadapi.v1;
+
+option go_package = "github.com/qredin/qredin/api/workloadapi/v1;workloadapi";
+
+message X509SVID {
+  string spiffe_id = 1;
+  bytes cert_chain = 2;
+  bytes private_key = 3;
+  string hint = 4;
+}
+
+message JWTSVID {
+  string spiffe_id = 1;
+  string token = 2;
+  string hint = 3;
+}
+
+message Bundle {
+  string trust_domain = 1;
+  bytes x509_authorities = 2;
+  bytes jwt_authorities = 3;
+  string hint = 4;
+}
+
+message X509SVIDRequest {
+  string trust_domain = 1;
+}
+
+message JWTSVIDRequest {
+  string audience = 1;
+}
+
+message X509SVIDResponse {
+  repeated X509SVID svids = 1;
+}
+
+message JWTSVIDResponse {
+  repeated JWTSVID svids = 1;
+}
+
+message BundleRequest {
+  string trust_domain = 1;
+}
+
+message BundleResponse {
+  repeated Bundle bundles = 1;
+}
+
+message SubscribeX509SVIDsRequest {
+  string trust_domain = 1;
+}
+
+message SubscribeJWTSVIDsRequest {
+  repeated string audiences = 1;
+}
+
+message SubscribeBundlesRequest {
+  // Empty: subscribe to all bundles the agent knows about
+}
+
+message SubscribeX509SVIDsResponse {
+  X509SVIDResponse svids = 1;
+}
+
+message SubscribeJWTSVIDsResponse {
+  JWTSVIDResponse svids = 1;
+}
+
+message SubscribeBundlesResponse {
+  BundleResponse bundles = 1;
+}
+
+service WorkloadAPI {
+  rpc FetchX509SVID(X509SVIDRequest) returns (X509SVIDResponse);
+  rpc FetchJWTSVID(JWTSVIDRequest) returns (JWTSVIDResponse);
+  rpc FetchBundle(BundleRequest) returns (BundleResponse);
+  rpc SubscribeX509SVIDs(SubscribeX509SVIDsRequest) returns (stream SubscribeX509SVIDsResponse);
+  rpc SubscribeJWTSVIDs(SubscribeJWTSVIDsRequest) returns (stream SubscribeJWTSVIDsResponse);
+  rpc SubscribeBundles(SubscribeBundlesRequest) returns (stream SubscribeBundlesResponse);
+}

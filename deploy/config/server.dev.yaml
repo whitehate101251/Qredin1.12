@@ -1,0 +1,34 @@
+environment: development
+log_level: info
+log_format: json
+
+http:
+  listen_addr: ":443"
+  uds_path: "/var/run/qredin/workload-api.sock"
+  tls_cert: ""
+  tls_key: ""
+
+postgres:
+  dsn: "postgres://qredin:qredin@postgres:5432/qredin?sslmode=disable"
+  max_conns: 10
+  min_conns: 2
+  conn_timeout: 5s
+  max_conn_idle: 5m
+  max_conn_lifetime: 30m
+
+trust_domain: "example.com"
+
+key_manager:
+  type: disk
+  dir: "/var/lib/qredin/keys"
+  region: ""
+  key_id: ""
+
+server:
+  authority_ttl: 24h
+
+agent:
+  server_addr: "qredin-server:443"
+  node_id: "spiffe://example.com/node/agent-1"
+  join_token_ttl: 5m
+  join_token_max_retries: 5

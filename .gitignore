@@ -1,0 +1,28 @@
+# Build output
+/bin/
+/dist/
+*.test
+*.out
+
+# Generated protobuf code (produced by `make proto`). Not committed: the .proto
+# files are the reviewed artifact. See docs/BUILD.md.
+/api/gen/
+
+# Local development state. Never commit key material.
+/.local/
+*.pem
+*.key
+*.p12
+*.pfx
+!testdata/**/*.pem
+!testdata/**/*.key
+
+# Secrets and env files
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/

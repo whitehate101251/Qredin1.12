@@ -1,0 +1,17 @@
+[Unit]
+Description=Qredin Node Agent
+Documentation=https://github.com/qredin/qredin
+After=qredin-server.service
+Requires=qredin-server.service
+
+[Service]
+Type=simple
+User=qredin
+Group=qredin
+ExecStart=/usr/local/bin/qredin-agent --config /etc/qredin/agent.yaml
+Restart=always
+RestartSec=10
+RestartPreventExitStatus=255
+
+[Install]
+WantedBy=multi-user.target

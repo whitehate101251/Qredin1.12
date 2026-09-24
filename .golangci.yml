@@ -1,0 +1,89 @@
+# golangci-lint configuration for Qredin.
+#
+# Posture: this is security-critical code. Lints that catch unchecked errors,
+# ignored contexts, and unsafe constructs are errors, not suggestions.
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  disable-all: true
+  enable:
+    - errcheck        # unchecked errors — an ignored error in a validator is a bypass
+    - govet
+    - staticcheck
+    - ineffassign
+    - unused
+    - gosec
+    - bodyclose
+    - contextcheck
+    - errorlint       # correct errors.Is/As usage; matters for sentinel error handling
+    - noctx
+    - rowserrcheck
+    - sqlclosecheck
+    - nilerr          # returning nil after a non-nil error — classic fail-open bug
+    - durationcheck
+    - makezero
+    - prealloc
+    - unconvert
+    - wastedassign
+    - misspell
+    - revive
+    - gocritic
+    - forbidigo
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: true
+
+  gosec:
+    excludes:
+      # G115 (integer overflow conversion) is too noisy against protobuf sizes;
+      # conversions on the trust boundary are individually reviewed instead.
+      - G115
+    config:
+      G306: "0600"    # files we write are key/state material
+
+  forbidigo:
+    forbid:
+      - p: '^fmt\.Print.*$'
+        msg: "use the structured logger (internal/telemetry/log); stdout is not an audit sink"
+      - p: '^math/rand\.'
+        msg: "use crypto/rand for anything reaching a security decision; math/rand/v2 only for jitter"
+      - p: '^time\.Now$'
+        pkg: '^github.com/qredin/qredin/pkg/x509svid$'
+        msg: "validators must take an explicit clock so expiry behaviour is testable"
+
+  revive:
+    rules:
+      - name: exported
+        arguments: ["checkPrivateReceivers"]
+      - name: error-strings
+      - name: errorf
+      - name: context-as-argument
+      - name: indent-error-flow
+
+  gocritic:
+    enabled-tags: [diagnostic, style, performance]
+    disabled-checks:
+      - hugeParam
+      - rangeValCopy
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    # Test fixtures legitimately construct deliberately-invalid certificates.
+    - path: _test\.go
+      linters: [gosec, errcheck, prealloc]
+    # The time.Now ban below exists so that production validators take an
+    # injected clock. Tests are where that clock gets pinned to an instant, so
+    # they have to be able to name the real one.
+    - path: _test\.go
+      linters: [forbidigo]
+      text: 'time\.Now'
+    # Generated code is not ours to lint.
+    - path: api/gen/
+      linters: [all]

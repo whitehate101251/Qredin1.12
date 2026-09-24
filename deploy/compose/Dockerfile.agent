@@ -1,0 +1,16 @@
+FROM alpine:3.20 AS base
+
+RUN addgroup -S qredin && adduser -S qredin -G qredin
+
+RUN mkdir -p /var/lib/qredin/keys /var/run/qredin /etc/qredin && \
+    chown -R qredin:qredin /var/lib/qredin /var/run/qredin /etc/qredin
+
+FROM base AS agent
+
+COPY bin/qredin-agent /usr/local/bin/qredin-agent
+COPY deploy/config/agent.dev.yaml /etc/qredin/agent.yaml
+
+USER qredin:qredin
+
+ENTRYPOINT ["/usr/local/bin/qredin-agent"]
+CMD ["--config", "/etc/qredin/agent.yaml"]

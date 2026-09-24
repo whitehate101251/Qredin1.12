@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: qredin
+      POSTGRES_USER: qredin
+      POSTGRES_PASSWORD: qredin
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qredin -d qredin"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  qredin-server:
+    build:
+      context: ..
+      dockerfile: deploy/compose/Dockerfile.server
+    environment:
+      - CONFIG=/config/server.dev.yaml
+    ports:
+      - "443:443"
+      - "9090:9090"
+    volumes:
+      - ./config:/config:ro
+      - qredin-keys:/var/lib/qredin/keys
+      - qredin-sockets:/var/run/qredin
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  qredin-agent:
+    build:
+      context: ..
+      dockerfile: deploy/compose/Dockerfile.agent
+    environment:
+      - CONFIG=/config/agent.dev.yaml
+    volumes:
+      - ./config:/config:ro
+      - qredin-keys:/var/lib/qredin/keys
+      - qredin-sockets:/var/run/qredin
+    depends_on:
+      qredin-server:
+        condition: service_started
+    restart: unless-stopped
+
+  qredin-authz:
+    build:
+      context: ..
+      dockerfile: deploy/compose/Dockerfile.authz
+    environment:
+      - CONFIG=/config/authz.dev.yaml
+    ports:
+      - "9091:9091"
+    volumes:
+      - ./config:/config:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
+  qredin-keys:
+  qredin-sockets:

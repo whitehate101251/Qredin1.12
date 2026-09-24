@@ -1,0 +1,22 @@
+[Unit]
+Description=Qredin Authorization Service
+Documentation=https://github.com/qredin/qredin
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+Type=simple
+User=qredin
+Group=qredin
+ExecStart=/usr/local/bin/qredin-authz --config /etc/qredin/authz.yaml
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65536
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/qredin /var/run/qredin
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

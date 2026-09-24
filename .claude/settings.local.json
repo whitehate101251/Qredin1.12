@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build *)",
+      "Bash(echo \"build exit: $?\")",
+      "Bash(go vet *)",
+      "Bash(cd \"/home/nomnom/Desktop/Qredin 1.2 \\(Copy\\)\" && sed -n '1,70p' internal/attestation/*.go 2>/dev/null | head -80; echo \"=== files ===\"; ls internal/attestation/)",
+      "WebFetch(domain:raw.githubusercontent.com)"
+    ],
+    "additionalDirectories": [
+      "/home/nomnom/Desktop/Qredin 1.2 (Copy)/internal/attestation"
+    ]
+  }
+}
