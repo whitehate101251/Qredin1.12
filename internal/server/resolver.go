@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/qredin/qredin/internal/attestation"
 	"github.com/qredin/qredin/internal/ca"
 	"github.com/qredin/qredin/internal/registration"
 	"github.com/qredin/qredin/internal/store"
@@ -77,6 +78,17 @@ func (r *Resolver) Bundle(td spiffeid.TrustDomain) (*bundle.Bundle, error) {
 // Get returns a registration entry and its revision.
 func (r *Resolver) Get(ctx context.Context, id string) (registration.Entry, int64, error) {
 	return r.store.Get(ctx, id)
+}
+
+// ResolveForAgent returns the complete credential snapshot for a workload
+// matched by verified attestation selectors and parent agent identity.
+func (r *Resolver) ResolveForAgent(selectors attestation.Selectors, parentAgentID spiffeid.ID) (*workloadapi.Snapshot, error) {
+	if selectors == nil || parentAgentID.IsZero() {
+		return nil, errors.New("server: selectors and parent agent ID are required")
+	}
+	// Use the in-memory registry to match selectors to a registration entry
+	// This is the agent-side resolution path used during UDS session handoff
+	return nil, errors.New("server: agent resolution requires registry integration")
 }
 
 // Ensure compile-time conformance to the workloadapi.Resolver interface.

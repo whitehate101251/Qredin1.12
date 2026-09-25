@@ -60,6 +60,17 @@ func enforceHeader(ctx context.Context) error {
 	return nil
 }
 
+// RequireStreamHeader is a gRPC stream interceptor that enforces the
+// workload.spiffe.io: true metadata header required by the SPIFFE spec.
+func RequireStreamHeader() grpc.StreamServerInterceptor {
+	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		if err := enforceHeader(ss.Context()); err != nil {
+			return err
+		}
+		return handler(srv, ss)
+	}
+}
+
 // FetchX509SVID returns the X.509-SVID for the caller's SPIFFE ID.
 func (s *WorkloadService) FetchX509SVID(ctx context.Context, req *pb.X509SVIDRequest) (*pb.X509SVIDResponse, error) {
 	// Extract caller identity from context (set by peer credential interceptor)

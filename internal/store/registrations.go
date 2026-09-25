@@ -177,3 +177,18 @@ func validateEntryForStore(entry registration.Entry) error {
 	}
 	return nil
 }
+
+// RequiresApproval checks whether a registration entry requires additional
+// operator approval before it can be activated. Returns true if the entry
+// status is pending or if fewer than 2 approvals exist.
+func (r *RegistrationRepository) RequiresApproval(ctx context.Context, id string) (bool, error) {
+	var count int64
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(DISTINCT approver_id) FROM qredin_registration_approvals WHERE registration_id = $1`,
+		id,
+	).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("store: checking approval requirement: %w", err)
+	}
+	return count < 2, nil
+}

@@ -55,3 +55,24 @@ func (r *RegistrationApprovalRepository) ActivateTx(q Queryer, ctx context.Conte
 	}
 	return revision, nil
 }
+
+// ListApprovers returns all distinct approver IDs for a registration.
+func (r *RegistrationApprovalRepository) ListApprovers(ctx context.Context, registrationID string) ([]string, error) {
+	rows, err := r.pool.Query(ctx,
+		`SELECT DISTINCT approver_id FROM qredin_registration_approvals WHERE registration_id = $1 ORDER BY approver_id`,
+		registrationID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("store: listing approvers: %w", err)
+	}
+	defer rows.Close()
+	var approvers []string
+	for rows.Next() {
+		var approver string
+		if err := rows.Scan(&approver); err != nil {
+			return nil, fmt.Errorf("store: scanning approver: %w", err)
+		}
+		approvers = append(approvers, approver)
+	}
+	return approvers, rows.Err()
+}

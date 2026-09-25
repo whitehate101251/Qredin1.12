@@ -72,6 +72,13 @@ func NewStream(initial Snapshot) (*Stream, error) {
 	}, nil
 }
 
+// Rotate replaces the stream's current credentials with a fresh snapshot.
+// This enables SVID rotation without workload restarts. The caller is
+// responsible for issuing the new snapshot before the previous SVIDs expire.
+func (s *Stream) Rotate(next Snapshot) error {
+	return s.Replace(next)
+}
+
 // Replace publishes a complete replacement. If an SVID or bundle is absent,
 // consumers receive that absence and must remove their cached copy.
 func (s *Stream) Replace(next Snapshot) error {

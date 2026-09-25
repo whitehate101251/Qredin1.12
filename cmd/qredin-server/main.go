@@ -204,7 +204,10 @@ func main() {
 	defer udsListener.Close()
 	slog.Info("listening on UDS socket", "path", cfg.HTTP.UDSPath)
 
-	grpcServer := grpc.NewServer(grpc.UnaryInterceptor(workloadapi.RequireHeader()))
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(workloadapi.RequireHeader()),
+		grpc.StreamInterceptor(workloadapi.RequireStreamHeader()),
+	)
 	workloadService.Register(grpcServer)
 	go func() {
 		slog.Info("starting Workload API gRPC server on UDS")
