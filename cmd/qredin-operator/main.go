@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/qredin/qredin/internal/config"
+	"github.com/qredin/qredin/authentication/config"
 )
 
 var (

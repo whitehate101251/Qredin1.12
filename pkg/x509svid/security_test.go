@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/qredin/qredin/internal/testsupport"
+	"github.com/qredin/qredin/pkg/testsupport"
 	"github.com/qredin/qredin/pkg/bundle"
 	"github.com/qredin/qredin/pkg/spiffeid"
 	"github.com/qredin/qredin/pkg/x509svid"

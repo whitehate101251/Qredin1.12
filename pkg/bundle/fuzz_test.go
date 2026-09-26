@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"github.com/qredin/qredin/internal/testsupport"
+	"github.com/qredin/qredin/pkg/testsupport"
 	"github.com/qredin/qredin/pkg/bundle"
 )
 
